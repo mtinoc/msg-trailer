@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.matinoc.msg-injector</groupId>
+    <artifactId>msg-injector</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+
+    <properties>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+        <encoding>UTF-8</encoding>
+        <scala.tools.version>2.11</scala.tools.version>
+        <scala.version>2.11.7</scala.version>
+        <spark.version>1.5.1</spark.version>
+    </properties>
+
+
+
+    <dependencies>
+        <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+            <version>2.3.20</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.tools.version}</artifactId>
+            <version>2.2.4</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>2.6.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.6.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.6.1</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.18.1</version>
+                    <configuration>
+                        <skipTests>true</skipTests>
+                        <useFile>false</useFile>
+                        <disableXmlReport>true</disableXmlReport>
+                        <!-- If you have classpath issue like NoDefClassError,... -->
+                        <!-- useManifestOnlyJar>false</useManifestOnlyJar -->
+                        <includes>
+                            <include>**/*Test.*</include>
+                            <include>**/*Suite.*</include>
+                        </includes>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.scalatest</groupId>
+                    <artifactId>scalatest-maven-plugin</artifactId>
+                    <version>1.0</version>
+                    <configuration>
+                        <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                        <junitxml>.</junitxml>
+                        <filereports>WDF TestSuite.txt</filereports>
+                        <parallel>false</parallel>
+                        <testFailureIgnore>true</testFailureIgnore>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>test</id>
+                            <goals>
+                                <goal>test</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.2</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>test-jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>net.alchim31.maven</groupId>
+                    <artifactId>scala-maven-plugin</artifactId>
+                    <version>3.2.1</version>
+                    <configuration>
+                        <args>
+                            <!-- limit scala file length due to issues with encrypted filesystems -->
+                            <arg>-Xmax-classfile-name</arg>
+                            <arg>143</arg>
+                        </args>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>scala-compile-first</id>
+                            <phase>process-resources</phase>
+                            <goals>
+                                <goal>add-source</goal>
+                                <goal>compile</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>scala-test-compile</id>
+                            <phase>process-test-resources</phase>
+                            <goals>
+                                <goal>testCompile</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>2.0.2</version>
+                    <executions>
+                        <execution>
+                            <phase>compile</phase>
+                            <goals>
+                                <goal>compile</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!--Formatting / scala style-->
+                <plugin>
+                    <groupId>org.scalastyle</groupId>
+                    <artifactId>scalastyle-maven-plugin</artifactId>
+                    <version>0.8.0</version>
+                    <configuration>
+                        <verbose>false</verbose>
+                        <failOnViolation>true</failOnViolation>
+                        <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                        <failOnWarning>false</failOnWarning>
+                        <sourceDirectory>src/main/scala</sourceDirectory>
+                        <testSourceDirectory>src/test/scala</testSourceDirectory>
+                        <configLocation>${basedir}/scalastyle_config.xml</configLocation>
+                        <outputFile>${basedir}/scalastyle-output.xml</outputFile>
+                        <outputEncoding>UTF-8</outputEncoding>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!-- scalariform plugin -->
+                <plugin>
+                    <groupId>org.scalariform</groupId>
+                    <artifactId>scalariform-maven-plugin</artifactId>
+                    <version>0.1.4</version>
+                    <executions>
+                        <execution>
+                            <phase>process-sources</phase>
+                            <goals>
+                                <goal>format</goal>
+                            </goals>
+                            <configuration>
+                                <alignParameters>false</alignParameters>
+                                <formatXml>true</formatXml>
+                                <preserveDanglingCloseParenthesis>true</preserveDanglingCloseParenthesis>
+                                <spaceInsideBrackets>false</spaceInsideBrackets>
+                                <indentWithTabs>false</indentWithTabs>
+                                <spaceInsideParentheses>false</spaceInsideParentheses>
+                                <multilineScaladocCommentsStartOnFirstLine>false</multilineScaladocCommentsStartOnFirstLine>
+                                <alignSingleLineCaseStatements>false</alignSingleLineCaseStatements>
+                                <compactStringConcatenation>false</compactStringConcatenation>
+                                <placeScaladocAsterisksBeneathSecondAsterisk>false
+                                </placeScaladocAsterisksBeneathSecondAsterisk>
+                                <indentPackageBlocks>true</indentPackageBlocks>
+                                <compactControlReadability>false</compactControlReadability>
+                                <spacesWithinPatternBinders>true</spacesWithinPatternBinders>
+                                <alignSingleLineCaseStatements_maxArrowIndent>40
+                                </alignSingleLineCaseStatements_maxArrowIndent>
+                                <doubleIndentClassDeclaration>false</doubleIndentClassDeclaration>
+                                <preserveSpaceBeforeArguments>false</preserveSpaceBeforeArguments>
+                                <spaceBeforeColon>false</spaceBeforeColon>
+                                <rewriteArrowSymbols>false</rewriteArrowSymbols>
+                                <indentLocalDefs>true</indentLocalDefs>
+                                <indentSpaces>2</indentSpaces>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>github-releases</id>
+            <url>http://oss.sonatype.org/content/repositories/github-releases/</url>
+        </repository>
+        <repository>
+            <id>clojars.org</id>
+            <url>http://clojars.org/repo</url>
+        </repository>
+        <repository>
+            <id>net.sf</id>
+            <url>http://oss.sonatype.org/content/repositories/net/sf/</url>
+        </repository>
+        <repository>
+            <id>twitter4j</id>
+            <url>http://twitter4j.org/maven2</url>
+        </repository>
+        <repository>
+            <id>jboss;org</id>
+            <name>jboss third party</name>
+            <url>https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/</url>
+        </repository>
+
+    </repositories>
+
+
+</project>
+
